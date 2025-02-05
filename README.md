@@ -1,7 +1,7 @@
 <b>Project Overview:<b/>
 
 This repository contains an NLP-based RAG (Retrieval-Augmented Generation) Marketing Content Generator 
-that utilizes Amazon Reviews from the ‘All Beauty’ category and corresponding metadata to generate marketing content. 
+that utilizes Amazon Reviews from the ‘All Beauty’ category and corresponding metadata to answer user queries, product recommendations, and generate marketing content. 
 The system retrieves relevant customer reviews and product details using semantic search and enhances content generation through a generative language model.
 
 Features :
