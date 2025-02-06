@@ -7,7 +7,7 @@ The system retrieves relevant customer reviews and product details using semanti
 Features :
 
 ✅ Retrieval-Augmented Generation (RAG) Pipeline
-	•	Uses Sentence Transformers to retrieve relevant customer reviews.
+	•	Retrieve relevant customer reviews.
 	•	Stores embeddings in a vector database 
 	•	Filters results based on sentiment, keywords, and product metadata.
 
