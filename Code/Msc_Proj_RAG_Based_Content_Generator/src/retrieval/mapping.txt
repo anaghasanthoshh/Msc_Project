@@ -1,0 +1,18 @@
+Review columns:
+['rating', 'title', 'text', 'images', 'asin', 'parent_asin', 'user_id',
+       'timestamp', 'helpful_vote', 'verified_purchase']
+product columns:
+['main_category', 'title', 'average_rating', 'rating_number', 'features',
+       'description', 'price', 'images', 'videos', 'store', 'categories',
+       'details', 'parent_asin', 'bought_together']
+
+SQL DB will contain:
+
+product metadata :parent_asin(PK), title, main_category, price, store,
+                  average_rating, rating_number
+
+review metadata:parent_asin(FK), user_id, rating, verified_purchase, helpful_vote, timestamp
+
+Vector DB:
+review_vector :parent_asin, review_text, vector_embedding
+product_vector:parent_asin, title, description, features, vector_embedding
