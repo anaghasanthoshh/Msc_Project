@@ -1,2 +1,5 @@
-ollama pull llama3
+sentence-transformers
+streamlit
+mlflow
+chromadb
 
