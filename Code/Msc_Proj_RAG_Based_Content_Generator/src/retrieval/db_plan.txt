@@ -14,5 +14,6 @@ product metadata :parent_asin(PK), title, main_category, price, store,
 review metadata:parent_asin(FK), user_id, rating, verified_purchase, helpful_vote, timestamp
 
 Vector DB:
-review_vector :parent_asin, review_text, vector_embedding
-product_vector:parent_asin, title, description, features, vector_embedding
+review_vector :parent_asin, review_text, vector_embedding(review text)
+product_vector:parent_asin, title, description, features,
+               vector_embedding(title, description, features)

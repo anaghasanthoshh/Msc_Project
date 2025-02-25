@@ -1,4 +1,6 @@
 import streamlit as st
+from src.retrieval.data_retrieval import query_to_vector,data_retrieval
+
 
 # Page Title
 st.title("🛍️ AI Chatbot - Product Recommendations")
@@ -18,9 +20,11 @@ product_input = st.chat_input("Ask me about products...")
 if product_input:
     # Store user message
     st.session_state.product_chat.append({"role": "user", "content": product_input})
+    query_embedding = query_to_vector(product_input)
 
     # Call RAG model here
-    recommended_products = [f"Product {i+1}" for i in range(3)]  # Placeholder recommendations
+    recommended_products,_ =data_retrieval(query_embedding)
+    #[f"Product {i+1}" for i in range(3)]  # Placeholder recommendations
 
     # Bot response
     bot_response = f"Here are some recommended products: {', '.join(recommended_products)}"
