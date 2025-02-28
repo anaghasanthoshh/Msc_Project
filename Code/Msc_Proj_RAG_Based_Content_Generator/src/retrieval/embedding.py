@@ -7,17 +7,18 @@ Models to be considered:
 # ====================================================================================##
 # One-time-run file as it generates embedding for the data.
 # ====================================================================================##
-#importing  required libraries
+# importing  required libraries
 import pandas as pd
 from io import StringIO
 from functools import lru_cache
-from data_loader import load_data, PRODUCT_PATH, REVIEW_PATH
+#from data_loader import load_data, PRODUCT_PATH, REVIEW_PATH
 from sentence_transformers import SentenceTransformer
 import chromadb
 import uuid
 
 # ====================================================================================##
 
+## TODO:Convert .add() to batchwise insertion of 5461(max value of chromadb)
 
 #load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -27,57 +28,18 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 shorter sentences, we will do basic cleaning like handling of duplicates.
 Since sentence transformers automatically handle tokenisation, its not performed'''
 
-
-# method for cleaning review data
-
-def flatten_dict(data):
-    return ";".join([f"{key}:{value}" for key, value in data.items()])
-
-
-def flatten_list(data):
-    return ",".join(f"{i}" for i in data)
-
-
-def preprocessing_review_data(df):
-    #.copy() to avoid updating df by accident
-    #df=df.drop_duplicates().copy()
-    #to lowercase
-    df['title'] = df['title'].fillna('').str.lower()
-    df['text'] = df['text'].fillna('').str.lower()
-    #convert to just date
-    df['timestamp'] = df['timestamp'].dt.date
-
-    return df
-
-
-# method for cleaning product data
-def preprocessing_product_data(df):
-    #df=df.drop_duplicates().copy()
-    df['title'] = df['title'].fillna('').str.lower()
-    df['main_category'] = df['main_category'].fillna('').str.lower()
-    df['description'] = df['description'].apply(lambda x: '' if isinstance(x, list) and len(x) == 0 else x)
-    df["description"].apply(flatten_list)
-    # df["categories"].apply(lambda x: '' if isinstance (x,list) and len(x)==0 else x)
-    df["features"] = df["features"].apply(lambda x: '' if isinstance(x, list) and len(x) == 0 else x)
-    df["features"] = df["features"].apply(flatten_list)
-    df["categories"] = df["categories"].apply(lambda x: '' if isinstance(x, list) and len(x) == 0 else x)
-    df["categories"] = df["categories"].apply(flatten_list)
-    df["details"] = df["details"].apply(flatten_dict)
-    return df
-
-
 # ====================================================================================##
 # Embedding and storing the data in chromadb
 # ====================================================================================##
 
-chroma_client = chromadb.Client(settings=chromadb.Settings(
-        persist_directory="../../Data/chroma_db"))  # Persistent storage
 def chroma_clients_collection():
-
+    chroma_client = chromadb.PersistentClient(path="../../Data/chroma_db")
+    # .PersistentClient () creates persistent storage of chromadb collections
     #chroma_client.delete_collection(name="product_embeddings")
     product_collection = chroma_client.get_or_create_collection("product_embeddings")
     #chroma_client.delete_collection(name="review_embeddings")
     review_collection = chroma_client.get_or_create_collection("review_embeddings")
+    print("inside chroma_clients function")
     return product_collection, review_collection
 
 
@@ -89,56 +51,52 @@ def fetch_existing_ids(collection):
     existing_ids = set(existing_embeddings['ids'])  # Convert to set for faster lookup
     return existing_ids
 
-
+# to embed product related text data into chroma db
 def product_embedding(df_product, product_collection):
-    existing_ids = fetch_existing_ids(product_collection)
-    for _, product in df_product.iterrows():  #unpacked as index,item
-        embedding_id = product["parent_asin"]
-        if embedding_id not in existing_ids:  #id logic used
-            combined_text = f"{product["description"]}{product["title"]}{product["features"]}{product["description"]}{product["details"]}"
-            embedding = model.encode(combined_text)
+    #existing_ids = fetch_existing_ids(product_collection)
 
-            # Add to ChromaDB
-            product_collection.add(
-                ids=[product["parent_asin"]],
-                embeddings=[embedding.tolist()],
-                metadatas=[{
-                    "title": product["title"],
-                    "price": product["price"],
-                    "product_details": combined_text
-                }])
+    df_product["combined_text"]=df_product[["description", "title", "features", "details"]] \
+                .astype(str)\
+                .fillna('')\
+                .agg(" ".join,axis=1) \
+                .str.strip()
 
+    df_product["embeddings"]=df_product["combined_text"].apply(model.encode)
 
-
-
-# define review embedding and adding to chromadb
-def review_embedding(df_review, review_collection):
-    #existing_ids=fetch_existing_ids(review_collection)
-
-    for _, review in df_review.iterrows():
-        #     embedding_id=review["parent_asin"]
-        #     if embedding_id not in existing_ids:existing_ids
-        combined_text = f"{review["title"]}{review["text"]}"
-        embedding = model.encode(combined_text)
-        unique_id = str(uuid.uuid4())
         # Add to ChromaDB
-        review_collection.add(
-            ids=unique_id,
-            embeddings=[embedding.tolist()],
-            metadatas=[{
-                "title": review["title"],
-                "text": review["text"],
-                "product_id": review["parent_asin"]
-
-            }]
-
+    product_collection.add(
+                ids=df_product["parent_asin"].tolist(),
+                embeddings=df_product["embeddings"].tolist(),
+                metadatas=df_product[["title", "price", "combined_text"]].to_dict(orient="records")
         )
 
 
+#  to embed review text data and adding them to chromadb
+def review_embedding(df_review, review_collection):
+    df_review["combined_text"]=df_review[["title","text"]]\
+        .astype(str)\
+        .fillna('')\
+        .agg(" ".join,axis=1) \
+        .str.strip()
+    df_review["embedding"]=df_review["combined_text"].apply(model.encode)
+    df_review["unique_id"]=df_review.apply(lambda _:str(uuid.uuid4()),axis=1)
+   # Add to ChromaDB
+    review_collection.add(
+            ids=df_review["unique_id"].tolist(),
+            embeddings=df_review["embedding"].tolist(),
+            metadatas=df_review[["title","text"]].to_dict(orient="records")
+            )
 
-df_product, df_review = load_data(PRODUCT_PATH, REVIEW_PATH)
-dfr = preprocessing_review_data(df_review)
-dfp = preprocessing_product_data(df_product)
+
+
+
+
+#df_product, df_review = load_data(PRODUCT_PATH, REVIEW_PATH)
+#dfr = preprocessing_review_data(df_review)
+#dfp = preprocessing_product_data(df_product)
 p_collection, r_collection = chroma_clients_collection()
+dfp=pd.read_csv('../../Data/processed_data/processed_prod_data.json',sep='^')
+dfr=pd.read_csv('../../Data/processed_data/processed_review_data.json',sep='^')
+
 product_embedding(dfp, p_collection)
 review_embedding(dfr, r_collection)
