@@ -1,14 +1,16 @@
 import chromadb
-#import embedding as emb
-from retrieval.embedding import model
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 # sample query
 query_text = "i want LASHVIEW brand eye lashes "
 
-chroma_client = chromadb.Client(settings=chromadb.Settings(
-        persist_directory="../../Data/chroma_db"))
+chroma_client = chromadb.PersistentClient(path="../../Data/chroma_db")
 product_collection=chroma_client.get_collection("product_embeddings")
 review_collection=chroma_client.get_collection("review_embeddings")
 
+# TODO:Use hybrid retrieval.Combine data from vector+postgres to refine retrival
 
 # converting the query to embedding
 def query_to_vector(query):
