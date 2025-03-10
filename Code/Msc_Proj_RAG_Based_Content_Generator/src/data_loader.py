@@ -38,7 +38,7 @@ def flatten_dict(data):
 
 def flatten_list(data):
     return ",".join(f"{i}" for i in data)
-
+##TODO: Need check for language,removal of html tags from text
 def preprocessing_review_data(df):
     #.copy() to avoid updating df by accident
     #df=df.drop_duplicates().copy()
