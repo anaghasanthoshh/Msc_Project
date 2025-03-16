@@ -2,4 +2,5 @@ sentence-transformers
 streamlit
 mlflow
 chromadb
+bs4
 
