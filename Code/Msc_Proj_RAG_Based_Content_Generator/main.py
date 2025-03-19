@@ -1,37 +1,21 @@
-import streamlit as st
-from src.retrieval.data_retrieval import query_to_vector,data_retrieval
+from retrieval.config import PRODUCT_PATH,PROD_PROCESSED
+from retrieval.data_retrieval import Retrieval
+import retrieval.retrieval_eval as reval
+from utils import log_timing
+import mlflow
 
 
-# Page Title
-st.title("🛍️ AI Chatbot - Product Recommendations")
+# Set MLflow tracking server URI
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_experiment("retrieval_and_evaluation")
+with mlflow.start_run(run_name="baseline_run") as run:
 
-# Initialize chat history in session state
-if "product_chat" not in st.session_state:
-    st.session_state.product_chat = []
+    ret=Retrieval()
+    query_text=input("Enter your query :")
+    with log_timing("Query Embedding"):
+        query_embed=ret.query_to_vector(query_text)
+    with log_timing("Data Retrieval"):
+        product_results=ret.data_retrieval(query_text,query_embed)
+    evaluation_results = reval.evaluate_retrieval(product_results, k=5, run_name="baseline_retrieval")
+    print(evaluation_results)
 
-# Display previous chat history
-for msg in st.session_state.product_chat:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
-
-# User input for chatbot
-product_input = st.chat_input("Ask me about products...")
-
-if product_input:
-    # Store user message
-    st.session_state.product_chat.append({"role": "user", "content": product_input})
-    query_embedding = query_to_vector(product_input)
-
-    # Call RAG model here
-    recommended_products,_ =data_retrieval(query_embedding)
-    #[f"Product {i+1}" for i in range(3)]  # Placeholder recommendations
-
-    # Bot response
-    bot_response = f"Here are some recommended products: {', '.join(recommended_products)}"
-
-    # Store bot response
-    st.session_state.product_chat.append({"role": "assistant", "content": bot_response})
-
-    # Display bot response
-    with st.chat_message("assistant"):
-        st.write(bot_response)

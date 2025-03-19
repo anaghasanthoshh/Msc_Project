@@ -5,13 +5,8 @@ import shutil
 from src.data_loader import load_data
 
 
-# Set MLflow tracking server URI
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("RAG_Full_Tracking")
 
-# Start MLflow run
-with mlflow.start_run():
-    print(" MLflow Tracking Started")
+
 
 # ====================Tracking Data Ingestion===================================
 

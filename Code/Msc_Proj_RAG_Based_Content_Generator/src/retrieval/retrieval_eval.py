@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import mlflow
-import config
+import retrieval.config as config
 import ast
 from retrieval.data_retrieval import Retrieval
 
@@ -12,7 +12,7 @@ ground_truth_df = pd.read_csv(config.GROUND_TRUTH)  # Adjust path as needed
 ground_truth_df=ground_truth_df[ground_truth_df['split']=='train']
 ground_truth_df['item_id']=ground_truth_df['item_id'].apply(lambda x: [doc.lower() for doc in ast.literal_eval(x)])
 
-# Convert ground truth into a dictionary (query → list of relevant product IDs)
+# Convert ground truth into a dictionary (query : list of relevant product IDs)
 ground_truth_dict = {
     row["query"]: row["item_id"] # Convert comma-separated IDs to a list
     for _, row in ground_truth_df.iterrows()
@@ -20,7 +20,7 @@ ground_truth_dict = {
 
 def evaluate_retrieval(retrieved_results, k=10, experiment_name="retrieval_experiment", run_name="default_run"):
     """
-    Evaluates retrieval performance using Precision@K, Recall@K, MRR, and NDCG@K.
+    Evaluates retrieval performance using Precision@K, Recall@K
     Logs results in MLflow.
 
     Parameters:
@@ -33,19 +33,16 @@ def evaluate_retrieval(retrieved_results, k=10, experiment_name="retrieval_exper
         DataFrame with evaluation metrics per query.
     """
 
-    # Set MLflow experiment
-    #mlflow.set_experiment(experiment_name)
 
     results = []
 
-    #with mlflow.start_run(run_name=run_name):
 
     for query, retrieved_ids in retrieved_results.items():
             groundtruth_docs = ground_truth_dict.get(query, [])
-            print(groundtruth_docs)
-            print(len(groundtruth_docs))
-            print(query)
-            print(retrieved_ids)
+            print(f"Ground truth IDs:{groundtruth_docs}")
+            print(f"No of Ground truth IDs:{len(groundtruth_docs)}")
+            print(f"User Query :{query}")
+            print(f"Fetched Ids:{retrieved_ids}")
 
             if not groundtruth_docs:
                 print("Query not found in ground truth document")
@@ -65,11 +62,12 @@ def evaluate_retrieval(retrieved_results, k=10, experiment_name="retrieval_exper
 
 
             # Store results
-            results.append({"query": query, f"Precision@{k}": precision_k, f"Recall@{k}": recall_k})
+            results.append({"query": query,"k_value":k, f"Precision{k}": precision_k, f"Recall@{k}": recall_k})
 
             # Log metrics in MLflow
-           # mlflow.log_metric("Precision@K", precision_k)
-            #mlflow.log_metric("Recall@K", recall_k)
+            mlflow.log_metric("K_value",k)
+            mlflow.log_metric("Precision_K", precision_k)
+            mlflow.log_metric("Recall_K", recall_k)
 
 
     return pd.DataFrame(results)
@@ -85,9 +83,7 @@ if __name__=="__main__":
     query_embed=ret.query_to_vector(query_text)
     product_results=ret.data_retrieval(query_text,query_embed)
 
-    # Example retrieved results from RAG system
-    retrieved_results =product_results
 
     # Run evaluation and log to MLflow
-    evaluation_results = evaluate_retrieval(retrieved_results, k=10, run_name="baseline_retrieval")
-    print(evaluation_results)
+    evaluation_results = evaluate_retrieval(product_results, k=10, run_name="baseline_retrieval")
+    print(f"{evaluation_results}\n")

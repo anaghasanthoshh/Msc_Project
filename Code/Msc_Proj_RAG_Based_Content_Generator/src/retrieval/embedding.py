@@ -58,7 +58,7 @@ class EmbedData:
             self.product_collection.add(
                 ids=data["item_id"].tolist(),
                 embeddings=data["embeddings"].tolist(),
-                metadatas=df[["category","metadata"]].to_dict(orient="records")
+                metadatas=data[["category","metadata"]].to_dict(orient="records")
             )
             print(f"Product_embedding:Batch {i} completed.")
 

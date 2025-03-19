@@ -1,7 +1,6 @@
 import pandas as pd
 import os
-import sys
-import io
+import mlflow
 from bs4 import BeautifulSoup
 from retrieval.config  import PRODUCT_PATH,PROD_PROCESSED
 from dotenv import load_dotenv
@@ -20,11 +19,15 @@ class DataLoader:
         # wrapping JSON string in StringIO before passing it to `read_json`
         self.product_df = pd.read_json(self.prod_path)
         self.product_count=self.product_df.shape[0]
+
         p_metadata={
             "dat_path":self.prod_path,
             "row_count":self.product_count,
             "column_names":self.product_df.columns
             }
+        mlflow.log_param("dat_path",self.prod_path)
+        mlflow.log_param("prod_data_count",self.product_count)
+        mlflow.log_param("column_names",self.product_df.columns)
         return self.product_df
     @staticmethod
     def remove_html_soup(text):
