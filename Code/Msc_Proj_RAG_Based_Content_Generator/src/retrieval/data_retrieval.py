@@ -1,7 +1,7 @@
 import chromadb
 import pandas as pd
 from sentence_transformers import SentenceTransformer
-from embedding import EmbedData
+from retrieval.embedding import EmbedData
 
 class Retrieval:
 
@@ -18,7 +18,7 @@ class Retrieval:
     # converting the query to embedding
     def query_to_vector(self,query):
         query_embedding = self.model.encode(query)
-        print("query encoded")
+        #print("query encoded")
         return query_embedding
 
     def data_retrieval(self,query_text,query_embedding):
