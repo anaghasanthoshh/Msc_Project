@@ -1,6 +1,3 @@
-import chromadb
-import pandas as pd
-from sentence_transformers import SentenceTransformer
 from retrieval.embedding import EmbedData
 
 class Retrieval:
@@ -11,9 +8,6 @@ class Retrieval:
         # print("starting to fetch products")
         self.product_collection=self.emb.product_collection
         self.k=k
-
-
-
 
     # converting the query to embedding
     def query_to_vector(self,query):
@@ -27,19 +21,22 @@ class Retrieval:
         query_embeddings=[query_embedding.tolist()],
         n_results=self.k
         )
-
+        #print(product_results)
         prod_results=product_results['ids'][0]
-        #gen_result={id for id in product_results['ids'][0]:product_results['metadata'] }
+        gen_result={}
+        for i in range(len(product_results['ids'][0])):
+            gen_result[product_results['ids'][0][i]]=product_results['metadatas'][0][i]['metadata']
+
         eval_results={query_text:prod_results}
 
-        return eval_results
+        return gen_result,eval_results
 
 
 if __name__=="__main__":
     ret=Retrieval()
     query_text=input("Enter your query :")
     query_embed=ret.query_to_vector(query_text)
-    product_results=ret.data_retrieval(query_text,query_embed)
+    _,product_results=ret.data_retrieval(query_text,query_embed)
     print(f"The product results are: \n{product_results}\n")
 
     #print(f"The reviews for fetched product results are: \n{prod_id_reviews}\n")
