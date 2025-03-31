@@ -49,7 +49,7 @@ class Recommendation:
             json={
                 "model": self.model,  # the model that we pulled using ollama
                 "prompt":explanation_prompt,
-                "stream": False  # set to False to get the full response at once
+                "stream": False  # set as False,to get the full response at once
             }
         )
         if response.status_code == 200:

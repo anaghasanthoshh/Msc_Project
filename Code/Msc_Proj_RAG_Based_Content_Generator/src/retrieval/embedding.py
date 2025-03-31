@@ -7,7 +7,7 @@ import pandas as pd
 import math
 from sentence_transformers import SentenceTransformer
 import chromadb
-from retrieval.config  import PRODUCT_PATH,PROD_PROCESSED
+from retrieval.config  import PRODUCT_PATH,PROD_PROCESSED,CHROMA_DB
 from tqdm import tqdm
 import uuid
 
@@ -18,20 +18,30 @@ import uuid
 # ====================================================================================##
 
 class EmbedData:
-    def __init__(self,model="all-MiniLM-L6-v2",dbpath="../../Data/chroma_db"):
+    def __init__(self,model="all-MiniLM-L6-v2",dbpath=CHROMA_DB):
         #load embedding model
         self.model = SentenceTransformer(model)
-        self.chroma_client=chromadb.PersistentClient(path=dbpath)# .PersistentClient () creates persistent storage of chromadb collections
-        self.product_collection=self.chroma_client.get_or_create_collection("product_embeddings")
-        print("initialised")
+        self.chroma_client = chromadb.PersistentClient(path=CHROMA_DB)# .PersistentClient () creates persistent storage of chromadb collections
+        self.product_coll_l2 = self.chroma_client.get_or_create_collection(
+                                            name="product_l2",
+                                            metadata={
+                                                    "hnsw:space": "l2"
+                                                      }
+                                                    )
+        self.product_coll_cosine = self.chroma_client.get_or_create_collection(
+                                             name="product_cosine",
+                                            metadata={
+                                                    "hnsw:space": "cosine"
+                                                     }
+                                                )
+        self.product_coll_ip = self.chroma_client.get_or_create_collection(
+            name="product_ip",
+            metadata={
+                "hnsw:space": "ip"
+            }
+        )
 
-# noticed an issue of duplicates being added into collection. Hence, checking for
-# existing ids
-#     def fetch_existing_ids(self):
-#         # Fetch all existing embeddings from the collection
-#         existing_embeddings = self.product_collection.get(include=["ids"])
-#         existing_ids = set(existing_embeddings['ids'])  # Convert to set for faster lookup
-#         return existing_ids
+        print("initialised")
 
 # to embed product related text data into chroma db
     def product_embedding(self,df_product):
@@ -55,12 +65,28 @@ class EmbedData:
             batch_start=i*batch_size
             batch_end=min(i*batch_size+batch_size,max_count)
             data=df_product[batch_start:batch_end]
-            self.product_collection.add(
+            self.product_coll_l2.add(
                 ids=data["item_id"].tolist(),
                 embeddings=data["embeddings"].tolist(),
                 metadatas=data[["category","metadata"]].to_dict(orient="records")
             )
-            print(f"Product_embedding:Batch {i} completed.")
+
+            print(f"Product_embedding l2:Batch {i} completed.")
+            self.product_coll_cosine.add(
+                ids=data["item_id"].tolist(),
+                embeddings=data["embeddings"].tolist(),
+                metadatas=data[["category", "metadata"]].to_dict(orient="records")
+            )
+            print(f"Product_embedding ip:Batch {i} completed.")
+            self.product_coll_ip.add(
+                ids=data["item_id"].tolist(),
+                embeddings=data["embeddings"].tolist(),
+                metadatas=data[["category", "metadata"]].to_dict(orient="records")
+            )
+            self.chroma_client.persist()
+            print(f"Product_embedding cosine:Batch {i} completed.")
+
+
 
 if __name__=="__main__":
     df = pd.read_csv(PROD_PROCESSED,sep='^')
