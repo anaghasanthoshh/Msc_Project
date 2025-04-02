@@ -2,6 +2,7 @@ from retrieval.embedding import EmbedData
 from enum import Enum
 
 
+
 class Metric(Enum):
     COSINE = "COSINE"
     IP = "IP"
@@ -10,9 +11,9 @@ class Metric(Enum):
 
 class Retrieval:
 
-    def __init__(self, k=5):
+    def __init__(self,model, k=5):
         self.emb = EmbedData()
-        self.model = self.emb.model
+        self.model = model
         # print("starting to fetch products")
         self.product_coll_l2 = self.emb.product_coll_l2
         self.product_coll_cosine = self.emb.product_coll_cosine

@@ -17,6 +17,9 @@ import uuid
 # Embedding and storing the data in chromadb
 # ====================================================================================##
 
+#model="all-MiniLM-L6-v2"
+
+
 class EmbedData:
     def __init__(self,model="all-MiniLM-L6-v2",dbpath=CHROMA_DB):
         #load embedding model
@@ -83,7 +86,7 @@ class EmbedData:
                 embeddings=data["embeddings"].tolist(),
                 metadatas=data[["category", "metadata"]].to_dict(orient="records")
             )
-            self.chroma_client.persist()
+            #self.chroma_client.persist()
             print(f"Product_embedding cosine:Batch {i} completed.")
 
 
@@ -91,7 +94,7 @@ class EmbedData:
 if __name__=="__main__":
     df = pd.read_csv(PROD_PROCESSED,sep='^')
     print('df loaded')
-    embed=EmbedData()
+    embed=EmbedData("multi-qa-mpnet-base-dot-v1")
     embed.product_embedding(df)
 
 

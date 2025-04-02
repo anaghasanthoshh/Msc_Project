@@ -11,7 +11,8 @@ mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("retrieval_and_evaluation")
 
 ## setting initial values :
-k = 5   # K for Precision/Recall@k
+model="multi-qa-mpnet-base-dot-v1"
+k = 10   # K for Precision/Recall@k
 stype = Metric.COSINE # Similiarity type
 with mlflow.start_run(run_name=f"{stype}_Similiarity") as run:
 
