@@ -2,7 +2,7 @@ from retrieval.config import PRODUCT_PATH,PROD_PROCESSED
 import data_loader as dl
 import retrieval.embedding as e
 import pandas as pd
-from utils import log_timing
+from utils.utils import log_timing
 import mlflow
 
 

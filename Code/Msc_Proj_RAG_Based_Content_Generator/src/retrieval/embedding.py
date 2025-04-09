@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 from retrieval.config  import PRODUCT_PATH,PROD_PROCESSED,CHROMA_DB
 from tqdm import tqdm
+from enum import Enum
 import uuid
 
 # ====================================================================================##
@@ -18,33 +19,39 @@ import uuid
 # ====================================================================================##
 
 #model="all-MiniLM-L6-v2"
-
+class Collection(Enum):
+    MINI_CO = "product_cosine_mini"
+    MINI_IP = "product_ip_mini"
+    MINI_L2 = "product_l2_mini"
+    QA_CO="product_cosine"
+    QA_IP="product_ip"
+    QA_L2="product_l2"
 
 class EmbedData:
-    def __init__(self,model="all-MiniLM-L6-v2",dbpath=CHROMA_DB):
+    def __init__(self,model,dbpath=CHROMA_DB):
         #load embedding model
-        self.model = SentenceTransformer(model)
+        self.model = model
         self.chroma_client = chromadb.PersistentClient(path=CHROMA_DB)# .PersistentClient () creates persistent storage of chromadb collections
         self.product_coll_l2 = self.chroma_client.get_or_create_collection(
-                                            name="product_l2",
+                                            name=Collection.QA_L2.value,
                                             metadata={
                                                     "hnsw:space": "l2"
                                                       }
                                                     )
         self.product_coll_cosine = self.chroma_client.get_or_create_collection(
-                                             name="product_cosine",
+                                             name= Collection.QA_CO.value,
                                             metadata={
                                                     "hnsw:space": "cosine"
                                                      }
                                                 )
         self.product_coll_ip = self.chroma_client.get_or_create_collection(
-            name="product_ip",
+            name=Collection.QA_IP.value,
             metadata={
                 "hnsw:space": "ip"
             }
         )
 
-        print("initialised")
+        #print("initialised")
 
 # to embed product related text data into chroma db
     def product_embedding(self,df_product):
@@ -94,7 +101,8 @@ class EmbedData:
 if __name__=="__main__":
     df = pd.read_csv(PROD_PROCESSED,sep='^')
     print('df loaded')
-    embed=EmbedData("multi-qa-mpnet-base-dot-v1")
+    model=SentenceTransformer("all-MiniLM-L6-v2")
+    embed=EmbedData(model)
     embed.product_embedding(df)
 
 
