@@ -3,4 +3,5 @@ streamlit
 mlflow
 chromadb
 bs4
+tabulate
 

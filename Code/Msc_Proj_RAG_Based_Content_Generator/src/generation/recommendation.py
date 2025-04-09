@@ -8,15 +8,24 @@ class Recommendation:
         self.model="llama2"
         self.output=''
 
-    import requests
+
+
+
 
     def generate_content(self):
         # Defining a prompt
-        full_prompt = (f"You are a helpful assistant."
-                       f"Answer the user query with the products supplied consisting of product id:product description pair in below format"
-                       f"Based on your query, here are the list of items I would recommend."
-                       f"itemid:small description of the item based on context\n"
-                       f"\n\nContext:{self.result_context}\n\nQuestion: {self.query}\n\nAnswer:")
+        full_prompt = prompt = (
+    "You are a helpful and knowledgeable assistant for product recommendations.\n"
+    "The user has asked a question, and you've been given a list of retrieved products in the format:\n"
+    "product_id: product description.\n\n"
+    "Your job is to read through the product information and recommend the items.\n"
+    "Present them as a friendly list with brief explanations for each product, showing how they relate to the user's query.\n\n"
+    "Only recommend from the provided context. Do not make up information.Include the ID of the products\n"
+    "Begin your response with: 'Based on your query, here are some products I recommend:'\n\n"
+    f"Context:\n{self.result_context}\n\n"
+    f"User Query:\n{self.query}\n\n"
+    "Answer:"
+)
 
         response = requests.post(
             "http://localhost:11434/api/generate",
@@ -35,14 +44,19 @@ class Recommendation:
             return None
 
     def explainability(self):
-        explanation_prompt = (
-            f"You are an assistant that explains recommendations to users.\n"
-            f"Context: {self.result_context}\n\n"
-            f"User query: {self.query}\n"
-            f"Recommendations given: {self.output.strip()}\n\n"
-            f"Explain in simple terms which word match or feature led to the recommendation , based on the context."
-            f"Include the exact item id and the few words from product description as proof."
-            f"Do not make up stuff.Strictly include data only from the result_context ")
+        explanation_prompt = explanation_prompt = (
+    "You are an assistant that explains why specific recommendations were made based on exact context and matching features.\n\n"
+    f"Context:\n{self.result_context}\n\n"
+    f"User Query:\n{self.query}\n\n"
+    f"Recommendations:\n{self.output.strip()}\n\n"
+    "For each recommended item:\n"
+    "- Identify the **exact words or features** that matched the query.\n"
+    "- Refer to **specific phrases from the product description** as proof.\n"
+    "- Include the **item ID**.\n"
+    "- Explain briefly **why this item was selected**, using only the context provided.\n\n"
+    " Do NOT invent or assume anything. Only use the data in the context.\n"
+    "Keep the explanations factual, concise, and easy to understand."
+)
 
         response = requests.post(
             "http://localhost:11434/api/generate",

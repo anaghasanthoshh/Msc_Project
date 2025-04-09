@@ -1,5 +1,7 @@
 from retrieval.embedding import EmbedData
 from enum import Enum
+from sentence_transformers import SentenceTransformer
+
 
 
 class Metric(Enum):
@@ -10,9 +12,9 @@ class Metric(Enum):
 
 class Retrieval:
 
-    def __init__(self, k=5):
-        self.emb = EmbedData()
-        self.model = self.emb.model
+    def __init__(self,model, k=5):
+        self.emb = EmbedData(model)
+        self.model = model
         # print("starting to fetch products")
         self.product_coll_l2 = self.emb.product_coll_l2
         self.product_coll_cosine = self.emb.product_coll_cosine
@@ -24,14 +26,15 @@ class Retrieval:
         query_embedding = self.model.encode(query)
         return query_embedding
 
-    def data_retrieval(self, query_text, query_embedding, type="l2"):
+    def data_retrieval(self, query_text, query_embedding, type="L2"):
         # Retrieve from product collection
         global product_results
         if type == Metric.L2:
             #print("l2 collection count:", len(self.product_coll_l2.get()['ids']))
             product_results = self.product_coll_l2.query(
                 query_embeddings=[query_embedding.tolist()],
-                n_results=self.k
+                n_results=self.k,
+                where={"metadata": query_text}
             )
         elif type == Metric.COSINE:
             #print("Cosine collection count:", len(self.product_coll_cosine.get()['ids']))
@@ -49,6 +52,7 @@ class Retrieval:
 
         #print(product_results)
         prod_results = product_results['ids'][0]
+        #print(prod_results)
         gen_result = {}
         for i in range(len(product_results['ids'][0])):
             gen_result[product_results['ids'][0][i]] = product_results['metadatas'][0][i]['metadata']
@@ -59,10 +63,12 @@ class Retrieval:
 
 
 if __name__ == "__main__":
-    ret = Retrieval()
+    model=SentenceTransformer("multi-qa-mpnet-base-dot-v1")
+    ret = Retrieval(model,10)
     query_text = input("Enter your query :")
     query_embed = ret.query_to_vector(query_text)
-    _, product_results = ret.data_retrieval(query_text, query_embed,"ip")
+    gen_results, product_results = ret.data_retrieval(query_text, query_embed,Metric.L2)
     print(f"The product results are: \n{product_results}\n")
+    print(gen_results)
 
     #print(f"The reviews for fetched product results are: \n{prod_id_reviews}\n")
