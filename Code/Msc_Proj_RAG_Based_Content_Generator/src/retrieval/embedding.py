@@ -33,19 +33,19 @@ class EmbedData:
         self.model = model
         self.chroma_client = chromadb.PersistentClient(path=CHROMA_DB)# .PersistentClient () creates persistent storage of chromadb collections
         self.product_coll_l2 = self.chroma_client.get_or_create_collection(
-                                            name=Collection.QA_L2.value,
+                                            name=Collection.MINI_L2.value,
                                             metadata={
                                                     "hnsw:space": "l2"
                                                       }
                                                     )
         self.product_coll_cosine = self.chroma_client.get_or_create_collection(
-                                             name= Collection.QA_CO.value,
+                                             name= Collection.MINI_CO.value,
                                             metadata={
                                                     "hnsw:space": "cosine"
                                                      }
                                                 )
         self.product_coll_ip = self.chroma_client.get_or_create_collection(
-            name=Collection.QA_IP.value,
+            name=Collection.MINI_IP.value,
             metadata={
                 "hnsw:space": "ip"
             }
