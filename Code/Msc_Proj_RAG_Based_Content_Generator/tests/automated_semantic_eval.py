@@ -9,25 +9,27 @@ import mlflow
 
 # Set MLflow tracking server URI
 mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("retrieval_and_evaluation_2")
+mlflow.set_experiment("Test_Semantic_retrieval_and_evaluation")
 
 ## setting initial values :
-#model_name="all-MiniLM-L6-v2"
-model_name="multi-qa-mpnet-base-dot-v1"
+model_name="all-MiniLM-L6-v2"
+#model_name="multi-qa-mpnet-base-dot-v1"
 model=SentenceTransformer(model_name)
-kr=30 # Total No.of items to be retrieved
-k = 15   # K for Precision/Recall@k
-stype = Metric.L2 # Similiarity type
+kr=20 # Total No.of items to be retrieved
+k = 3  # K for Precision/Recall@k
+stype = Metric.L2  # similiarity type
 with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") as run:
 
     ret = Retrieval(model,kr)
     # query_text = input("Enter your query :")
     ground_truth_path = GROUND_TRUTH
     gt_df = pd.read_csv(ground_truth_path)
-    gt_df=gt_df[gt_df["split"]=="train"]
+    gt_df=gt_df[gt_df["split"]=="test"]
     all_results = []
     all_precisions = []
     all_recalls = []
+    all_mrr = []
+    query_length_precision={}
 
     for idx, row in gt_df.iterrows():
         query_text = row["query"]
@@ -46,6 +48,9 @@ with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") 
         all_results.append({"query": query_text, "metrics": eval_result})
         all_precisions.append(eval_result[f"precision_{k}"])
         all_recalls.append(eval_result[f"recall_{k}"])
+        all_mrr.append(eval_result["MRR_score"])
+        query_length_precision[idx] = {"length": query_len, "precision": (eval_result[f"precision_{k}"]).iloc[0]}
+
 
         mlflow.log_param(f"K_value", k)
         mlflow.log_param("Total Retrieved",kr)
@@ -53,13 +58,22 @@ with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") 
         mlflow.log_param(f"query_length{idx}", query_len)
         mlflow.log_metric(f"Precision_K{idx}", eval_result[f"precision_{k}"])
         mlflow.log_metric(f"Recall_K_{idx}", eval_result[f"recall_{k}"])
+        mlflow.log_metric("MRR_score", eval_result["MRR_score"])
+
+
+
         print(f"Query {idx}: {query_text}\nMetrics: {eval_result}\n")
-    avg_precision = sum(all_precisions)/len(all_precisions)
-    avg_recall = sum(all_recalls)/len(all_recalls)
+    avg_precision = (sum(all_precisions)/len(all_precisions)).iloc[0]
+    avg_recall = (sum(all_recalls)/len(all_recalls)).iloc[0]
+    avg_mrr=(sum(all_mrr)/len(all_mrr)).iloc[0]
     mlflow.log_metric("Average_Precision",avg_precision)
     mlflow.log_metric("Average_Recall",avg_recall)
+    mlflow.log_metric("Average_MRR_score", avg_mrr)
+    mlflow.log_dict(query_length_precision,"query_length_precision")
     print(f"Average recall: {avg_recall}")
     print(f"Average Precision: {avg_precision}")
+    print(f"Average MRR :{avg_mrr}")
+
     # rec = Recommendation(query_text, generation_results)
     # content = rec.generate_content()
     # print(f"Product Recommendation:\n\n{content}\n")

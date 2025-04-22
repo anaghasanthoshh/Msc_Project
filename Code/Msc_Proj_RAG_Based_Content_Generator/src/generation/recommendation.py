@@ -10,14 +10,14 @@ class Recommendation:
 
 
 
-
-
     def generate_content(self):
         # Defining a prompt
-        full_prompt = prompt = (
+        full_prompt = (
     "You are a helpful and knowledgeable assistant for product recommendations.\n"
     "The user has asked a question, and you've been given a list of retrieved products in the format:\n"
     "product_id: product description.\n\n"
+    "DO NOT MAKE UP INFORMATION.ONLY RECOMMEND WITH AVAILABLE DETAILS.IF DATA IS NOT PROVIDED,ACCEPT THAT WE DONT HAVE SUFFICIENT"
+    ""
     "Your job is to read through the product information and recommend the items.\n"
     "Present them as a friendly list with brief explanations for each product, showing how they relate to the user's query.\n\n"
     "Only recommend from the provided context. Do not make up information.Include the ID of the products\n"
@@ -25,7 +25,7 @@ class Recommendation:
     f"Context:\n{self.result_context}\n\n"
     f"User Query:\n{self.query}\n\n"
     "Answer:"
-)
+                    )
 
         response = requests.post(
             "http://localhost:11434/api/generate",
