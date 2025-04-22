@@ -8,7 +8,7 @@ from utils.utils import print_banner
 ground_truth_df = pd.read_csv(config.GROUND_TRUTH)  # Adjust path as needed
 
 # select only the train splits from the query set:
-ground_truth_df = ground_truth_df[ground_truth_df['split'] == 'train']
+ground_truth_df = ground_truth_df[ground_truth_df['split'] == 'test']
 ground_truth_df['item_id'] = ground_truth_df['item_id'].apply(lambda x: [doc.lower() for doc in ast.literal_eval(x)])
 
 # Convert ground truth into a dictionary (query : list of relevant product IDs)
@@ -46,13 +46,22 @@ def evaluate_retrieval(retrieved_results, k=5, experiment_name="retrieval_experi
         # Recall@K: Fraction of total ground truth products retrieved within top-K
         recall_k = sum(relevance_scores) / len(groundtruth_docs) if groundtruth_docs else 0
 
+        #MRR
+        MRR=0
+        for rank, id in enumerate(retrieved_ids[:k]):
+            if id in groundtruth_docs:
+                MRR = 1 /(rank + 1)
+                break
+
         # Store results
-        results.append({"query" : query, "k_value" : k, f"precision_{k}" : precision_k, f"recall_{k}" : recall_k})
+        results.append({"query" : query, "k_value" : k, f"precision_{k}" : precision_k, f"recall_{k}" : recall_k,"MRR_score":MRR})
 
         # Log metrics in MLflow
 
 
     return pd.DataFrame(results)
+
+
 
 
 if __name__ == "__main__":

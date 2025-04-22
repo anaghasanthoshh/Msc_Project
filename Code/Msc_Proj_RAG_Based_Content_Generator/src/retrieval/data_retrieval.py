@@ -34,7 +34,7 @@ class Retrieval:
             product_results = self.product_coll_l2.query(
                 query_embeddings=[query_embedding.tolist()],
                 n_results=self.k,
-                where={"metadata": query_text}
+
             )
         elif type == Metric.COSINE:
             #print("Cosine collection count:", len(self.product_coll_cosine.get()['ids']))
@@ -60,6 +60,10 @@ class Retrieval:
         eval_results = {query_text: prod_results}
 
         return gen_result, eval_results
+
+
+
+
 
 
 if __name__ == "__main__":

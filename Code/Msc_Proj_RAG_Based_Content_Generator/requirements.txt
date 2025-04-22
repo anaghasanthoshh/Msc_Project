@@ -4,4 +4,6 @@ mlflow
 chromadb
 bs4
 tabulate
+whoosh
+seaborn
 

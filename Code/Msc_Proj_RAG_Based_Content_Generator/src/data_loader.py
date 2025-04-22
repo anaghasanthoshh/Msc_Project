@@ -49,8 +49,8 @@ class DataLoader:
 
         if os.path.exists(PROD_PROCESSED):
             os.remove(PROD_PROCESSED)
-        prod_df.to_csv(PROD_PROCESSED, sep='^')
-        return 'File saved as csv'
+        prod_df.to_json(PROD_PROCESSED)
+        return 'File saved as json'
 
 
 if __name__ == "__main__":

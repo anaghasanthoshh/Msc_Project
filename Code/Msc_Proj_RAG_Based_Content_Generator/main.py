@@ -8,8 +8,8 @@ import mlflow
 
 ## setting initial values :
 
-#model_name="all-MiniLM-L6-v2"
-model_name="multi-qa-mpnet-base-dot-v1"
+model_name="all-MiniLM-L6-v2"
+#model_name="multi-qa-mpnet-base-dot-v1"
 model=SentenceTransformer(model_name)
 kr=10
 k=5
@@ -50,7 +50,7 @@ with mlflow.start_run(run_name="baseline_run") as run:
       content = rec.generate_content()
       print_banner(f"Product Recommendation:\n{content}\n",)
       #print(f"Product Recommendation:\n\n{content}\n")
-      print_banner(f"Explainability :\n{rec.explainability()}")
+      #print_banner(f"Explainability :\n{rec.explainability()}")
 
 
 
