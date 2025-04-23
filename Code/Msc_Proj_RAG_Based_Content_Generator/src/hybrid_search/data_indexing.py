@@ -1,3 +1,7 @@
+# ====================================================================================##
+# data indexing module for building search indices and vector stores
+# ====================================================================================##
+#importing required libraries
 import shutil
 from whoosh.fields import Schema, TEXT, ID
 from whoosh.index import create_in
@@ -7,7 +11,9 @@ from retrieval.config import PROD_PROCESSED,WHOOSH_INDEX
 import pandas as pd
 
 df=pd.read_csv(PROD_PROCESSED,sep="^")
-
+# ====================================================================================##
+# create_search_index: builds a whoosh index from processed metadata
+# ====================================================================================##
 def whoosh_index(df, index_dir=WHOOSH_INDEX):
     schema = Schema(
         item_id=ID(stored=True),
@@ -31,6 +37,8 @@ def whoosh_index(df, index_dir=WHOOSH_INDEX):
             metadata=row.get("metadata", "")
         )
     writer.commit()
-
+# ====================================================================================##
+# command-line interface for running the indexing tasks
+# ====================================================================================##
 if __name__=="__main__":
     whoosh_index(df, index_dir=WHOOSH_INDEX)

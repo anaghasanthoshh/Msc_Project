@@ -1,3 +1,7 @@
+# ====================================================================================##
+# alpha tuning pipeline for optimizing hybrid search weighting parameter
+# ====================================================================================##
+# importing required libraries
 from hybrid_search.hybrid_search_alpha import HybridSearchAlpha
 from retrieval.config import GROUND_TRUTH
 from sentence_transformers import SentenceTransformer
@@ -7,10 +11,16 @@ from utils.utils import log_timing
 import pandas as pd
 import mlflow
 import numpy as np
+# ====================================================================================##
+# mlflow setup: tracking URI and experiment initialization
+# ====================================================================================##
 
 # Set MLflow tracking server URI
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("Alpha tuning")
+# ====================================================================================##
+# define model, hyperparameters (k values, alpha range), and load ground truth
+# ====================================================================================##
 
 # setting initial values :
 model_name="all-MiniLM-L6-v2"
@@ -29,6 +39,10 @@ all_precisions = []
 all_recalls = []
 all_mrr =[]
 metrics_artifact={}
+
+# ====================================================================================##
+# iterate over alpha and k to evaluate hybrid search performance
+# ====================================================================================##
 
 for alpha in alphas:
     for k in k_list:
@@ -63,6 +77,9 @@ for alpha in alphas:
             mlflow.log_metric("Average_Recall",avg_recall)
             mlflow.log_metric("Average_MRR_score",avg_mrr)
 
+# ====================================================================================##
+# identify best alpha based on average MRR and precision
+# ====================================================================================##
 best_alpha_mrr = max(all_results, key=lambda x: x[3])
 best_alpha_precision=max(all_results, key=lambda x: x[1])
 print(f"Best alpha (MRR): {best_alpha_mrr[0]} with MRR = {best_alpha_mrr[3]}")

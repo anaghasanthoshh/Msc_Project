@@ -1,3 +1,7 @@
+# ====================================================================================##
+# automated hybrid evaluation script combining search and metrics logging
+# ====================================================================================##
+# importing required libraries
 from hybrid_search.hybrid_search import HybridSearch
 from retrieval.config import GROUND_TRUTH
 from sentence_transformers import SentenceTransformer
@@ -7,10 +11,16 @@ from utils.utils import log_timing
 import pandas as pd
 import mlflow
 
+# ====================================================================================##
+# mlflow setup: tracking server and experiment initialization
+# ====================================================================================##
 # Set MLflow tracking server URI
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("Test_Hybrid_retrieval_evaluation")
 
+# ====================================================================================##
+# initialization: load embedding model and prepare test queries
+# ====================================================================================##
 # setting initial values :
 #model_name="all-MiniLM-L6-v2"
 model_name="multi-qa-mpnet-base-dot-v1"
@@ -25,6 +35,9 @@ all_precisions = []
 all_recalls = []
 all_mrr =[]
 metrics_artifact={}
+# ====================================================================================##
+# evaluation loop: iterate over similarity metrics and k values
+# ====================================================================================##
 for type in type_List:
     for k in k_list:
         with (mlflow.start_run(run_name=f"Model:{model_name}_K:{k}_Similiarity:{type}") as run):
@@ -55,6 +68,9 @@ for type in type_List:
 
                 print(f"Query {idx}: {query_text}\nMetrics: {eval_result}\n")
 
+            # ====================================================================================##
+            # calculate and log average precision, recall, and mrr
+            # ====================================================================================##
             avg_precision = (sum(all_precisions)/len(all_precisions)).iloc[0]
             avg_recall = (sum(all_recalls)/len(all_recalls)).iloc[0]
             avg_mrr = (sum(all_mrr)/len(all_mrr)).iloc[0]

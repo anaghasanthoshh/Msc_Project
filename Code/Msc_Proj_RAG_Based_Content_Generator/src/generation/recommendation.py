@@ -1,5 +1,12 @@
+# ====================================================================================##
+# recommendation module for generating product suggestions and explanations
+# ====================================================================================##
+# importing required libraries
 import requests
 
+# ====================================================================================##
+# recommendation class encapsulating generation and explainability methods
+# ====================================================================================##
 class Recommendation:
     def __init__(self,query,result_context):
         self.query=query
@@ -10,6 +17,9 @@ class Recommendation:
 
 
 
+    # ====================================================================================##
+    # generate_content: builds prompt and calls API for recommendations
+    # ====================================================================================##
     def generate_content(self):
         # Defining a prompt
         full_prompt = (
@@ -43,6 +53,9 @@ class Recommendation:
             print("Error communicating with Ollama:", response.text)
             return None
 
+    # ====================================================================================##
+    # explainability: builds prompt and calls API for recommendation explanations
+    # ====================================================================================##
     def explainability(self):
         explanation_prompt = explanation_prompt = (
     "You are an assistant that explains why specific recommendations were made based on exact context and matching features.\n\n"
@@ -52,7 +65,7 @@ class Recommendation:
     "For each recommended item:\n"
     "- Identify the **exact words or features** that matched the query.\n"
     "- Refer to **specific phrases from the product description** as proof.\n"
-    "- Include the **item ID**.\n"
+    f"- Include the **item ID**.[{self.result_context.keys()}\n"
     "- Explain briefly **why this item was selected**, using only the context provided.\n\n"
     " Do NOT invent or assume anything. Only use the data in the context.\n"
     "Keep the explanations factual, concise, and easy to understand."
