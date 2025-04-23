@@ -1,11 +1,18 @@
+# ====================================================================================##
+# retrieval evaluation script to compute metrics on model outputs
+# ====================================================================================##
+# importing required libraries
 import ast
-import mlflow
 import pandas as pd
 import retrieval.config as config
 from retrieval.data_retrieval import Retrieval
 from utils.utils import print_banner
 
-ground_truth_df = pd.read_csv(config.GROUND_TRUTH)  # Adjust path as needed
+# ====================================================================================##
+# loading ground truth data and preprocessing
+# ====================================================================================##
+
+ground_truth_df = pd.read_csv(config.GROUND_TRUTH)
 
 # select only the train splits from the query set:
 ground_truth_df = ground_truth_df[ground_truth_df['split'] == 'test']
@@ -13,20 +20,21 @@ ground_truth_df['item_id'] = ground_truth_df['item_id'].apply(lambda x: [doc.low
 
 # Convert ground truth into a dictionary (query : list of relevant product IDs)
 ground_truth_dict = {
-    row["query"]: row["item_id"]  # Convert comma-separated IDs to a list
+    row["query"]: row["item_id"]
     for _, row in ground_truth_df.iterrows()
 }
 
+# ====================================================================================##
+# evaluation function to compute precision, recall, and mrr
+# ====================================================================================##
 
 def evaluate_retrieval(retrieved_results, k=5, experiment_name="retrieval_experiment", run_name="default_run"):
-
 
     results = []
     for query, retrieved_ids in retrieved_results.items():
         groundtruth_docs = ground_truth_dict.get(query, [])
 
         if not groundtruth_docs:
-
             return
             # Skip queries with no ground truth
         print_banner("Analysing the data:\n", f"User Query : {query}",
@@ -46,7 +54,6 @@ def evaluate_retrieval(retrieved_results, k=5, experiment_name="retrieval_experi
         # Recall@K: Fraction of total ground truth products retrieved within top-K
         recall_k = sum(relevance_scores) / len(groundtruth_docs) if groundtruth_docs else 0
 
-        #MRR
         MRR=0
         for rank, id in enumerate(retrieved_ids[:k]):
             if id in groundtruth_docs:
@@ -56,13 +63,11 @@ def evaluate_retrieval(retrieved_results, k=5, experiment_name="retrieval_experi
         # Store results
         results.append({"query" : query, "k_value" : k, f"precision_{k}" : precision_k, f"recall_{k}" : recall_k,"MRR_score":MRR})
 
-        # Log metrics in MLflow
-
-
     return pd.DataFrame(results)
 
-
-
+# ====================================================================================##
+# command-line interface for running evaluation pipeline
+# ====================================================================================##
 
 if __name__ == "__main__":
     ret = Retrieval()

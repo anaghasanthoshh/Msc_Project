@@ -1,3 +1,7 @@
+# ====================================================================================##
+# hybrid search module combining keyword filtering and semantic retrieval
+# ====================================================================================##
+# importing required libraries
 from whoosh.qparser import MultifieldParser,OrGroup
 from whoosh.index import open_dir
 from sentence_transformers import util
@@ -6,8 +10,14 @@ from retrieval.embedding import EmbedData
 from retrieval.data_retrieval import Retrieval
 from sentence_transformers import SentenceTransformer
 
+# ====================================================================================##
+# hybrid search class to orchestrate keyword, semantic, and reranking
+# ====================================================================================##
 class HybridSearch:
 
+    # ====================================================================================##
+    # initialize with query text, model, and metric type
+    # ====================================================================================##
     def __init__(self,query_text,model,type="L2"):
         self.ret=Retrieval(model)
         self.model=self.ret.model
@@ -18,6 +28,9 @@ class HybridSearch:
         self.product_coll_cosine=self.ret.product_coll_cosine
         self.type=type
 
+    # ====================================================================================##
+    # keyword_filter: retrieve top_n items using whoosh keyword search
+    # ====================================================================================##
     def keyword_filter(self,index_dir=WHOOSH_INDEX, top_n=10):
         ix = open_dir(index_dir)
         filtered_data ={}
@@ -26,11 +39,12 @@ class HybridSearch:
             query = parser.parse(self.query_text)
             results = searcher.search(query, limit=top_n)
             for r in results:
-            # filtered_ids = [r["item_id"] for r in results]
-            # data=[r["metadata"] for r in results]
                 filtered_data[r["item_id"]]=r["metadata"]
         return filtered_data
 
+    # ====================================================================================##
+    # semantic_search: encode query and retrieve top_k from semantic index
+    # ====================================================================================##
     def semantic_search(self,query_text,k=10):
         semantic_data={}
         query_embedding=self.model.encode(query_text,convert_to_tensor=True)
@@ -58,6 +72,9 @@ class HybridSearch:
             semantic_data[product_results['ids'][0][i]] = product_results['metadatas'][0][i]['metadata']
         return query_embedding,semantic_data
 
+    # ====================================================================================##
+    # combine_rerank_results: merge keyword and semantic results with conflict check
+    # ====================================================================================##
     def combine_rerank_results(self,filtered_data,semantic_data):
         for k, v in semantic_data.items():
             if k in filtered_data and filtered_data[k] != v:
@@ -65,6 +82,9 @@ class HybridSearch:
         self.merged_data={**semantic_data, **filtered_data}
         return self.merged_data
 
+    # ====================================================================================##
+    # cosine_similarity_rerank: rerank merged results based on semantic similarity
+    # ====================================================================================##
     def cosine_similiarity_rerank(self,query_embedding):
         scored_data=[]
         for key,value in self.merged_data.items():
@@ -81,6 +101,9 @@ class HybridSearch:
         return data_for_eval
 
 
+# ====================================================================================##
+# command-line interface for hybrid search demonstration
+# ====================================================================================##
 if __name__=="__main__":
     model = SentenceTransformer("multi-qa-mpnet-base-dot-v1")
     query_text="black porcelain tile"
@@ -89,10 +112,4 @@ if __name__=="__main__":
     query_embedding,semantic_data=hybrid.semantic_search(query_text)
     merged_data=hybrid.combine_rerank_results(filtered_data,semantic_data)
     final_sorted_ids=hybrid.cosine_similiarity_rerank(query_embedding)
-    #"all-MiniLM-L6-v2"
-
-
-
-
-
-
+    # "all-MiniLM-L6-v2"

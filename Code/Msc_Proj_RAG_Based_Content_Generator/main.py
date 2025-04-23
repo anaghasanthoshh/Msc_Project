@@ -1,3 +1,7 @@
+# ====================================================================================##
+# main script to run retrieval, evaluation, and recommendation pipeline
+# ====================================================================================##
+# importing required libraries
 from retrieval.data_retrieval import Retrieval,Metric
 from retrieval.retrieval_eval import evaluate_retrieval
 from generation.recommendation import Recommendation
@@ -6,21 +10,30 @@ from utils.utils import log_timing,print_banner
 from tabulate import tabulate
 import mlflow
 
-## setting initial values :
-
+# ====================================================================================##
+# model and parameter configuration
+# ====================================================================================##
 model_name="all-MiniLM-L6-v2"
-#model_name="multi-qa-mpnet-base-dot-v1"
+# model_name="multi-qa-mpnet-base-dot-v1"
 model=SentenceTransformer(model_name)
 kr=10
 k=5
 
+# ====================================================================================##
+# mlflow setup: tracking server and experiment initialization
+# ====================================================================================##
 # Set MLflow tracking server URI
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("retrieval_and_evaluation")
+# ====================================================================================##
+# start mlflow run for baseline retrieval and evaluation
+# ====================================================================================##
 with mlflow.start_run(run_name="baseline_run") as run:
     ret = Retrieval(model=model,k=kr)
 
-## Block for executing single query ###
+# ====================================================================================##
+# interactive query input loop
+# ====================================================================================##
     query_text = input("\nEnter your query :\n")
     while(not query_text):
         print("No query provided. Cannot proceed.")
@@ -44,13 +57,14 @@ with mlflow.start_run(run_name="baseline_run") as run:
     else:
         print_banner("Retrieval Evaluation Metrics :\n",f"{tabulate(evaluation_results,headers='keys', tablefmt='github')}\n")
 
-
+# ====================================================================================##
+# data generation and recommendation
+# ====================================================================================##
     with log_timing("Data Generation"):
       rec = Recommendation(query_text, generation_input)
       content = rec.generate_content()
       print_banner(f"Product Recommendation:\n{content}\n",)
-      #print(f"Product Recommendation:\n\n{content}\n")
-      #print_banner(f"Explainability :\n{rec.explainability()}")
+      print_banner(f"Explainability :\n{rec.explainability()}")
 
 
 

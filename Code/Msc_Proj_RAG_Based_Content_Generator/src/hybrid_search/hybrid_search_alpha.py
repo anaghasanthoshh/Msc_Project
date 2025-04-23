@@ -1,3 +1,7 @@
+# ====================================================================================##
+# hybrid search alpha module combining keyword filtering and semantic retrieval
+# ====================================================================================##
+# importing required libraries
 from sklearn.preprocessing import MinMaxScaler
 from whoosh.qparser import MultifieldParser,OrGroup
 from whoosh.index import open_dir
@@ -8,8 +12,13 @@ from retrieval.data_retrieval import Retrieval
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
+# ====================================================================================##
+# hybrid search alpha class for keyword, semantic, and reranking
+# ====================================================================================##
 class HybridSearchAlpha:
-
+    # ====================================================================================##
+    # initialize with query text, embedding model, and distance metric
+    # ====================================================================================##
     def __init__(self,query_text,model,type="L2"):
         self.ret=Retrieval(model)
         self.model=self.ret.model
@@ -19,7 +28,9 @@ class HybridSearchAlpha:
         self.product_coll_ip=self.ret.product_coll_ip
         self.product_coll_cosine=self.ret.product_coll_cosine
         self.type=type
-
+    # ====================================================================================##
+    # keyword_filter: run whoosh-based keyword search and return top_n items
+    # ====================================================================================##
     def keyword_filter(self,index_dir=WHOOSH_INDEX, top_n=5):
         ix = open_dir(index_dir)
         temp_data={}
@@ -52,7 +63,9 @@ class HybridSearchAlpha:
                         }
 
         return filtered_data
-
+    # ====================================================================================##
+    # semantic_search: encode query and fetch top_k semantic matches
+    # ====================================================================================##
     def semantic_search(self,query_text,k=5):
         semantic_data={}
         query_embedding=self.model.encode(query_text)
@@ -96,10 +109,10 @@ class HybridSearchAlpha:
                     "metadata": metadata,
                     "score": score
                 }
-
-
         return semantic_data
-
+    # ====================================================================================##
+    # combine_results: merge keyword and semantic outputs, checking for conflicts
+    # ====================================================================================##
     def combine_rerank_results(self, filtered_data, semantic_data):
         self.merged_data = {}
 
@@ -115,7 +128,9 @@ class HybridSearchAlpha:
             }
 
         return self.merged_data
-
+    # ====================================================================================##
+    # rerank_by_alpha_score: compute  similarity scores and sort
+    # ====================================================================================##
     def alpha_rerank(self, alpha=0.5):
         reranked = []
         for item_id, data in self.merged_data.items():
@@ -127,6 +142,9 @@ class HybridSearchAlpha:
         return eval_data  # return ordered item_ids
 
 
+# ====================================================================================##
+# command-line interface for hybrid search alpha demonstration
+# ====================================================================================##
 
 if __name__=="__main__":
     model = SentenceTransformer("all-MiniLM-L6-v2")

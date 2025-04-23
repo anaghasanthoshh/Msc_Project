@@ -1,3 +1,7 @@
+# ====================================================================================##
+# automated semantic evaluation script combining retrieval and metrics logging
+# ====================================================================================##
+# importing required libraries
 from retrieval.config import GROUND_TRUTH
 from sentence_transformers import SentenceTransformer
 from retrieval.data_retrieval import Retrieval,Metric
@@ -7,10 +11,16 @@ import pandas as pd
 import mlflow
 
 
+# ====================================================================================##
+# mlflow setup: tracking server and experiment initialization
+# ====================================================================================##
 # Set MLflow tracking server URI
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("Test_Semantic_retrieval_and_evaluation")
 
+# ====================================================================================##
+# initialization: load embedding model, set retrieval parameters
+# ====================================================================================##
 ## setting initial values :
 model_name="all-MiniLM-L6-v2"
 #model_name="multi-qa-mpnet-base-dot-v1"
@@ -31,6 +41,9 @@ with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") 
     all_mrr = []
     query_length_precision={}
 
+    # ====================================================================================##
+    # evaluation loop: iterate over test queries and compute metrics
+    # ====================================================================================##
     for idx, row in gt_df.iterrows():
         query_text = row["query"]
         query_len=len(row["query"])
@@ -63,6 +76,9 @@ with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") 
 
 
         print(f"Query {idx}: {query_text}\nMetrics: {eval_result}\n")
+    # ====================================================================================##
+    # calculate and log average precision, recall, and MRR
+    # ====================================================================================##
     avg_precision = (sum(all_precisions)/len(all_precisions)).iloc[0]
     avg_recall = (sum(all_recalls)/len(all_recalls)).iloc[0]
     avg_mrr=(sum(all_mrr)/len(all_mrr)).iloc[0]
@@ -74,7 +90,4 @@ with mlflow.start_run(run_name=f"{stype}_Similiarity_Model:{model_name}_K:{k}") 
     print(f"Average Precision: {avg_precision}")
     print(f"Average MRR :{avg_mrr}")
 
-    # rec = Recommendation(query_text, generation_results)
-    # content = rec.generate_content()
-    # print(f"Product Recommendation:\n\n{content}\n")
-    # print(f"Explainability:{rec.explainability()}")
+

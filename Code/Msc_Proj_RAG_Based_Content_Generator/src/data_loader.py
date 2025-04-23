@@ -1,18 +1,30 @@
+# ====================================================================================##
+# data loading module for reading and preprocessing datasets-one time
+# ====================================================================================##
+# importing required libraries
 import pandas as pd
 import os
 import mlflow
 from bs4 import BeautifulSoup
 from retrieval.config import PRODUCT_PATH, PROD_PROCESSED
-from dotenv import load_dotenv
 
+
+# ====================================================================================##
+# defining dataloader class and its data handling methods
+# ====================================================================================##
 
 class DataLoader:
+        # ====================================================================================##
+        # initialize data loader with product path and empty dataframe
+        # ====================================================================================##
     def __init__(self, prod_path):
         self.prod_path = prod_path
         self.product_count = 0
         self.product_df = pd.DataFrame()
 
-    # TODO: load the data  and return metadata,dataframes for tracking details in MLflow_tracking.py
+        # ====================================================================================##
+        # load product data from json and log parameters in mlflow
+        # ====================================================================================##
     def load_data(self):
 
         # wrapping JSON string in StringIO before passing it to `read_json`
@@ -29,11 +41,16 @@ class DataLoader:
         mlflow.log_param("column_names", self.product_df.columns)
         return self.product_df
 
+        # ====================================================================================##
+        # helper to strip html tags from text
+        # ====================================================================================##
     @staticmethod
     def remove_html_soup(text):
         return BeautifulSoup(str(text), "html.parser").get_text()
 
-    # TODO: Need check for language,removal of html tags from text
+        # ====================================================================================##
+        # preprocess product dataframe: drop duplicates, lowercase, remove html, save to json
+        # ====================================================================================##
     def preprocessing_product_data(self):
 
         prod_df = self.product_df.drop_duplicates().copy()
@@ -52,7 +69,9 @@ class DataLoader:
         prod_df.to_json(PROD_PROCESSED)
         return 'File saved as json'
 
-
+# ====================================================================================##
+# command-line interface for data loading pipeline
+# ====================================================================================##
 if __name__ == "__main__":
     # calling the functions performing the data_cleaning/data loading
     data_loader = DataLoader(PRODUCT_PATH)

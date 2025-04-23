@@ -18,8 +18,8 @@ print(f"Correlation:{corr}" )
 
 #Plotting
 plt.figure(figsize=(8, 5))
-plt.scatter(df["length"], df["precision"], color="blue", alpha=0.7)
-plt.title("Query Length vs Precision")
+plt.scatter(df["length"], df["precision"], color="blue", alpha=0.5)
+plt.title("Scatter Plot: Query Length vs Precision")
 plt.xlabel("Query Length")
 plt.ylabel("Precision")
 plt.grid(True)
